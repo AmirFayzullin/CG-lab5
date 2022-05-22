@@ -222,6 +222,29 @@ bool Mesh::InitMaterials(const aiScene* pScene, const string& Filename)
 }
 
 
+void Mesh::Render()
+{
+    glBindVertexArray(m_VAO);
+    
+    for (unsigned int i = 0 ; i < m_Entries.size() ; i++) {
+        const unsigned int MaterialIndex = m_Entries[i].MaterialIndex;
+
+        assert(MaterialIndex < m_Textures.size());
+        
+        if (m_Textures[MaterialIndex]) {
+            m_Textures[MaterialIndex]->Bind(GL_TEXTURE0);
+        }
+
+		glDrawElementsBaseVertex(GL_TRIANGLES, 
+                                 m_Entries[i].NumIndices, 
+                                 GL_UNSIGNED_INT, 
+                                 (void*)(sizeof(unsigned int) * m_Entries[i].BaseIndex), 
+                                 m_Entries[i].BaseVertex);
+    }
+
+    glBindVertexArray(0);
+}
+
 void Mesh::Render(unsigned int NumInstances, const Matrix4f* WVPMats, const Matrix4f* WorldMats)
 {        
     glBindBuffer(GL_ARRAY_BUFFER, m_Buffers[WVP_MAT_VB]);

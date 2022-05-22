@@ -38,6 +38,8 @@ public:
 
     bool LoadMesh(const std::string& Filename);
 
+    void Render();
+	
     void Render(unsigned int NumInstances, const Matrix4f* WVPMats, const Matrix4f* WorldMats);
 
 private:

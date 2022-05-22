@@ -1,4 +1,3 @@
-#include <stdlib.h>
 
 #include "util.h"
 #include "math_3d.h"
@@ -170,5 +169,5 @@ Quaternion operator*(const Quaternion& q, const Vector3f& v)
 float RandomFloat()
 {
     float Max = RAND_MAX;
-    return ((float)rand() / Max);
+    return ((float)RANDOM() / Max);
 }
