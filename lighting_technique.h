@@ -60,8 +60,7 @@ struct SpotLight : public PointLight
     }
 };
 
-class LightingTechnique : public Technique 
-{
+class LightingTechnique : public Technique {
 public:
 
     static const unsigned int MAX_POINT_LIGHTS = 2;
@@ -72,11 +71,8 @@ public:
     virtual bool Init();
 
     void SetWVP(const Matrix4f& WVP);
-    void SetLightWVP(const Matrix4f& LightWVP);
     void SetWorldMatrix(const Matrix4f& WVP);
     void SetColorTextureUnit(unsigned int TextureUnit);
-    void SetShadowMapTextureUnit(unsigned int TextureUnit);
-    void SetNormalMapTextureUnit(unsigned int TextureUnit);
     void SetDirectionalLight(const DirectionalLight& Light);
     void SetPointLights(unsigned int NumLights, const PointLight* pLights);
     void SetSpotLights(unsigned int NumLights, const SpotLight* pLights);
@@ -87,11 +83,8 @@ public:
 private:
 
     GLuint m_WVPLocation;
-    GLuint m_LightWVPLocation;
     GLuint m_WorldMatrixLocation;
-    GLuint m_colorMapLocation;
-    GLuint m_shadowMapLocation;
-    GLuint m_normalMapLocation;
+    GLuint m_colorTextureLocation;
     GLuint m_eyeWorldPosLocation;
     GLuint m_matSpecularIntensityLocation;
     GLuint m_matSpecularPowerLocation;
