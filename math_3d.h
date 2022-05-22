@@ -7,6 +7,8 @@
 #define ToRadian(x) ((x) * 3.14f / 180.0f)
 #define ToDegree(x) ((x) * 180.0f / 3.14f)
 
+float RandomFloat();
+
 struct Vector2i
 {
     int x;

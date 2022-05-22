@@ -1,6 +1,13 @@
+#include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#ifdef __GNUC__
+#  if __GNUC_PREREQ(4,7)
+#include <unistd.h>
+#  endif
+#endif
 
 #include "engine_common.h"
 #include "util.h"
@@ -10,10 +17,13 @@
 #include "lighting_technique.h"
 #include "glut_backend.h"
 #include "mesh.h"
-#include "billboard_list.h"
+#include "particle_system.h"
 
-#define WINDOW_WIDTH  1280
-#define WINDOW_HEIGHT 768
+#include <process.h>
+#include <ctime>
+
+#define WINDOW_WIDTH  300
+#define WINDOW_HEIGHT 400
 
 
 class Main : public ICallbacks
@@ -26,6 +36,7 @@ public:
     const std::string TEXTURE = CONTENT_PATH + "grass.jpg";
     const std::string NORMAL_MAP = CONTENT_PATH + "normal_map.jpg";
     const std::string NORMAL_UP = CONTENT_PATH + "normal_up.jpg";
+
     Main()
     {
         m_pLightingTechnique = NULL;        
@@ -43,7 +54,9 @@ public:
         m_persProjInfo.Height = WINDOW_HEIGHT;
         m_persProjInfo.Width = WINDOW_WIDTH;
         m_persProjInfo.zNear = 1.0f;
-        m_persProjInfo.zFar = 100.0f;        
+        m_persProjInfo.zFar = 100.0f;  
+
+        m_currentTimeMillis = GetCurrentTime();
     }
     
 
@@ -59,8 +72,8 @@ public:
     
     bool Init()
     {
-        Vector3f Pos(0.0f, 1.0f, -1.0f);
-        Vector3f Target(0.0f, -0.5f, 1.0f);
+        Vector3f Pos(0.0f, 0.4f, -0.5f);
+        Vector3f Target(0.0f, 0.2f, 1.0f);
         Vector3f Up(0.0, 1.0f, 0.0f);
 
         m_pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT, Pos, Target, Up);
@@ -74,19 +87,15 @@ public:
 
         m_pLightingTechnique->Enable();
         m_pLightingTechnique->SetDirectionalLight(m_dirLight);
-        m_pLightingTechnique->SetColorTextureUnit(0);
-        m_pLightingTechnique->SetNormalMapTextureUnit(2);
+        m_pLightingTechnique->SetColorTextureUnit(COLOR_TEXTURE_UNIT_INDEX);
+        m_pLightingTechnique->SetNormalMapTextureUnit(NORMAL_TEXTURE_UNIT_INDEX);
               
         m_pGround = new Mesh();
         
         if (!m_pGround->LoadMesh(QUAD_OBJ)) {
             return false;
         }
-        
-        if (!m_billboardList.Init(BILLBOARD_MODEL)) {
-            return false;
-        }
-               
+                       
         m_pTexture = new Texture(GL_TEXTURE_2D, TEXTURE);
         
         if (!m_pTexture->Load()) {
@@ -100,8 +109,10 @@ public:
         if (!m_pNormalMap->Load()) {
             return false;
         }
-
-        return true;
+        
+        Vector3f ParticleSystemPos = Vector3f(0.0f, 0.0f, 1.0f);
+                        
+        return m_particleSystem.InitParticleSystem(ParticleSystemPos);
     }
 
     
@@ -113,6 +124,10 @@ public:
     
     virtual void RenderSceneCB()
     {
+        long long TimeNowMillis = GetCurrentTime();
+        assert(TimeNowMillis >= m_currentTimeMillis);
+        unsigned int DeltaTimeMillis = (unsigned int)(TimeNowMillis - m_currentTimeMillis);
+        m_currentTimeMillis = TimeNowMillis;                
         m_pGameCamera->OnRender();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -130,9 +145,11 @@ public:
         
         m_pLightingTechnique->SetWVP(p.GetWVPTrans());
         m_pLightingTechnique->SetWorldMatrix(p.GetWorldTrans());
+        
         m_pGround->Render();
-                
-        m_billboardList.Render(p.GetVPTrans(), m_pGameCamera->GetPos());
+        
+        m_particleSystem.Render(DeltaTimeMillis, p.GetVPTrans(), m_pGameCamera->GetPos());
+        
         glutSwapBuffers();
     }
 
@@ -166,6 +183,7 @@ public:
 
  private:
 
+    long long m_currentTimeMillis;
     LightingTechnique* m_pLightingTechnique;
     Camera* m_pGameCamera;
     DirectionalLight m_dirLight;    
@@ -173,16 +191,18 @@ public:
     Texture* m_pTexture;
     Texture* m_pNormalMap;
     PersProjInfo m_persProjInfo;
-    BillboardList m_billboardList;
+    ParticleSystem m_particleSystem;
 };
 
 
 int main(int argc, char** argv)
 {
+    srand(_getpid());
+       
     GLUTBackendInit(argc, argv);
-    Magick::InitializeMagick(nullptr);
+    Magick::InitializeMagick(nullptr); 
 
-    if (!GLUTBackendCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, 32, false, "Amir (27)")) {
+    if (!GLUTBackendCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, 32, false, "Amir (28)")) {
         return 1;
     }
 

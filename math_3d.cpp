@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "math_3d.h"
 
 Vector3f Vector3f::Cross(const Vector3f& v) const
@@ -137,6 +138,7 @@ Quaternion Quaternion::Conjugate()
     return ret;
 }
 
+
 Quaternion operator*(const Quaternion& l, const Quaternion& r)
 {
     const float w = (l.w * r.w) - (l.x * r.x) - (l.y * r.y) - (l.z * r.z);
@@ -149,6 +151,7 @@ Quaternion operator*(const Quaternion& l, const Quaternion& r)
     return ret;
 }
 
+
 Quaternion operator*(const Quaternion& q, const Vector3f& v)
 {
     const float w = - (q.x * v.x) - (q.y * v.y) - (q.z * v.z);
@@ -159,4 +162,11 @@ Quaternion operator*(const Quaternion& q, const Vector3f& v)
     Quaternion ret(x, y, z, w);
 
     return ret;
+}
+
+
+float RandomFloat()
+{
+    float Max = RAND_MAX;
+    return ((float)rand() / Max);
 }

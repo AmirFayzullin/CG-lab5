@@ -1,4 +1,6 @@
 #include <iostream>
+
+#include "util.h"
 #include "texture.h"
 
 Texture::Texture(GLenum TextureTarget, const std::string& FileName)
@@ -25,7 +27,7 @@ bool Texture::Load()
     glTexParameterf(m_textureTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(m_textureTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    return true;
+    return GLCheckError();
 }
 
 void Texture::Bind(GLenum TextureUnit)
