@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
+#include "util.h"
 #include "glut_backend.h"
 
 // Pointer to the object that is implementing the ICallbacks interface which was delivered to
@@ -67,7 +68,7 @@ bool GLUTBackendCreateWindow(unsigned int Width, unsigned int Height, unsigned i
 {
     if (isFullScreen) {
         char ModeString[64] = { 0 };
-        snprintf(ModeString, sizeof(ModeString), "%dx%d@%d", Width, Height, bpp);
+        SNPRINTF(ModeString, sizeof(ModeString), "%dx%d@%d", Width, Height, bpp);
         glutGameModeString(ModeString);
         glutEnterGameMode();
     }
