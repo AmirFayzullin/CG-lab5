@@ -10,6 +10,7 @@
 #include "ds_geom_pass_tech.h"
 #include "ds_point_light_pass_tech.h"
 #include "ds_dir_light_pass_tech.h"
+#include "null_technique.h"
 #include "glut_backend.h"
 #include "mesh.h"
 #ifdef FREETYPE
@@ -57,7 +58,7 @@ public:
         
         m_time = glutGet(GLUT_ELAPSED_TIME);
     }
-        
+
 
     ~Main()
     {
@@ -84,7 +85,7 @@ public:
 			printf("Error initializing DSPointLightPassTech\n");
 			return false;
 		}
-
+	
 		m_DSPointLightPassTech.Enable();
 
 		m_DSPointLightPassTech.SetPositionTextureUnit(GBuffer::GBUFFER_TEXTURE_TYPE_POSITION);
@@ -104,6 +105,13 @@ public:
 		m_DSDirLightPassTech.SetNormalTextureUnit(GBuffer::GBUFFER_TEXTURE_TYPE_NORMAL);
 		m_DSDirLightPassTech.SetDirectionalLight(m_dirLight);
         m_DSDirLightPassTech.SetScreenSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        Matrix4f WVP;
+        WVP.InitIdentity();
+        m_DSDirLightPassTech.SetWVP(WVP);
+
+		if (!m_nullTech.Init()) {
+			return false;
+		}
         
         if (!m_quad.LoadMesh(QUAD_OBJ)) {
             return false;
@@ -121,8 +129,7 @@ public:
         if (!m_fontRenderer.InitFontRenderer()) {
             return false;
         }
-#endif
-        	
+#endif        	
 		return true;
     }
 
@@ -140,14 +147,23 @@ public:
 
         m_pGameCamera->OnRender();
 
-        DSGeometryPass();
-        
-        BeginLightPasses();
+		m_gbuffer.StartFrame();
 
-        DSPointLightsPass();
+        DSGeometryPass();
+
+		glEnable(GL_STENCIL_TEST);
+
+		for (unsigned int i = 0 ; i < ARRAY_SIZE_IN_ELEMENTS(m_pointLight); i++) {
+			DSStencilPass(i);
+			DSPointLightPass(i);
+		}
+
+		glDisable(GL_STENCIL_TEST);
 
 		DSDirectionalLightPass();
-               
+
+		DSFinalPass();
+        
         RenderFPS();
         
         glutSwapBuffers();
@@ -158,15 +174,13 @@ public:
     {
 		m_DSGeomPassTech.Enable();
 
-        m_gbuffer.BindForWriting();
+        m_gbuffer.BindForGeomPass();
 
 		glDepthMask(GL_TRUE);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       
-        glEnable(GL_DEPTH_TEST);
-        
-        glDisable(GL_BLEND);        
+
+		glEnable(GL_DEPTH_TEST);
 
 		Pipeline p;
         p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
@@ -178,61 +192,103 @@ public:
             m_DSGeomPassTech.SetWVP(p.GetWVPTrans());
         	m_DSGeomPassTech.SetWorldMatrix(p.GetWorldTrans());
             m_box.Render();            
-        }              
+        }
 
-		glDepthMask(GL_FALSE);
-        
-        glDisable(GL_DEPTH_TEST);
+		glDepthMask(GL_FALSE);		
     }
 
-    
-    void BeginLightPasses()
-    {
-       	glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
-		glBlendFunc(GL_ONE, GL_ONE);
+	void DSStencilPass(unsigned int PointLightIndex)
+	{
+		m_nullTech.Enable();
 
-        m_gbuffer.BindForReading();
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
+		m_gbuffer.BindForStencilPass();
+		glEnable(GL_DEPTH_TEST);
+
+        glDisable(GL_CULL_FACE);
+
+		glClear(GL_STENCIL_BUFFER_BIT);
+
+		glStencilFunc(GL_ALWAYS, 0, 0);
+
+		glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+		glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+
+		Pipeline p;
+		p.WorldPos(m_pointLight[PointLightIndex].Position);
+        float BBoxScale = CalcPointLightBSphere(m_pointLight[PointLightIndex]);
+		p.Scale(BBoxScale, BBoxScale, BBoxScale);		
+        p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
+        p.SetPerspectiveProj(m_persProjInfo);
+
+		m_nullTech.SetWVP(p.GetWVPTrans());
+		m_bsphere.Render();  
+	}
+
     
-    
-    void DSPointLightsPass()
+    void DSPointLightPass(unsigned int PointLightIndex)
     {
+		m_gbuffer.BindForLightPass();
+
         m_DSPointLightPassTech.Enable();
         m_DSPointLightPassTech.SetEyeWorldPos(m_pGameCamera->GetPos());        
+
+		glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+      		
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_ONE, GL_ONE);
         
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+
         Pipeline p;
+        p.WorldPos(m_pointLight[PointLightIndex].Position);
+        float BBoxScale = CalcPointLightBSphere(m_pointLight[PointLightIndex]);        
+		p.Scale(BBoxScale, BBoxScale, BBoxScale);		
         p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
-        p.SetPerspectiveProj(m_persProjInfo);        
-           
-		for (unsigned int i = 0 ; i < ARRAY_SIZE_IN_ELEMENTS(m_pointLight); i++) {
-            m_DSPointLightPassTech.SetPointLight(m_pointLight[i]);            
-            p.WorldPos(m_pointLight[i].Position);
-            float BSphereScale = CalcPointLightBSphere(m_pointLight[i]);
-            p.Scale(BSphereScale, BSphereScale, BSphereScale);		
-            m_DSPointLightPassTech.SetWVP(p.GetWVPTrans());
-            m_bsphere.Render();                   
-		}        
+        p.SetPerspectiveProj(m_persProjInfo);               
+        m_DSPointLightPassTech.SetWVP(p.GetWVPTrans());
+        m_DSPointLightPassTech.SetPointLight(m_pointLight[PointLightIndex]);
+        m_bsphere.Render(); 
+        glCullFace(GL_BACK);
+       
+		glDisable(GL_BLEND);
     }
 	
 
-	void DSDirectionalLightPass()    
-    {		
+	void DSDirectionalLightPass()
+	{
+		m_gbuffer.BindForLightPass();
+
         m_DSDirLightPassTech.Enable();
         m_DSDirLightPassTech.SetEyeWorldPos(m_pGameCamera->GetPos());
-        Matrix4f WVP;
-        WVP.InitIdentity();        
-        m_DSDirLightPassTech.SetWVP(WVP);
+
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_ONE, GL_ONE);
+
         m_quad.Render();  
+
+		glDisable(GL_BLEND);
 	}
 
+
+	void DSFinalPass()
+	{
+		m_gbuffer.BindForFinalPass();
+        glBlitFramebuffer(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 
+                          0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	}
+	
 
     virtual void IdleCB()
     {
         RenderSceneCB();
     }
 
+    
     virtual void SpecialKeyboardCB(int Key, int x, int y)
     {
         m_pGameCamera->OnKeyboard(Key);
@@ -260,7 +316,7 @@ public:
     }
 
 private:
-    
+
     float CalcPointLightBSphere(const PointLight& Light)
     {
         float MaxChannel = fmax(fmax(Light.Color.x, Light.Color.y), Light.Color.z);
@@ -271,7 +327,6 @@ private:
         
         return ret;
     }    
-    
         
     void InitLights()
     {
@@ -346,6 +401,7 @@ private:
 	DSGeomPassTech m_DSGeomPassTech;
 	DSPointLightPassTech m_DSPointLightPassTech;
     DSDirLightPassTech m_DSDirLightPassTech;
+    NullTechnique m_nullTech;
     Camera* m_pGameCamera;
     float m_scale;
     SpotLight m_spotLight;
@@ -371,7 +427,7 @@ int main(int argc, char** argv)
     Magick::InitializeMagick(*argv);
     GLUTBackendInit(argc, argv);
 
-    if (!GLUTBackendCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, 32, false, "Amir (36)")) {
+    if (!GLUTBackendCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, 32, false, "Amir (37)")) {
         return 1;
     }
     
@@ -379,7 +435,7 @@ int main(int argc, char** argv)
 
     if (!pApp->Init()) {
         return 1;
-    }
+    }       
     
     pApp->Run();
 

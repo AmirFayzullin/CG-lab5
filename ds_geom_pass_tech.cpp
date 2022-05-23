@@ -5,7 +5,7 @@
 #include "util.h"
 
 
-DSGeomPassTech::DSGeomPassTech() : Technique("C:/Users/Amir/Desktop/For UGATU/Computer Graphics/shaders/shaders5_5/geometry_pass.glsl")
+DSGeomPassTech::DSGeomPassTech() : Technique("C:/Users/Amir/Desktop/For UGATU/Computer Graphics/shaders/shaders37/geometry_pass.glsl")
 {
 }
 

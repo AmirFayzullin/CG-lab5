@@ -1,4 +1,4 @@
-
+#include <stdlib.h>
 #include "util.h"
 #include "math_3d.h"
 
@@ -139,7 +139,6 @@ Quaternion Quaternion::Conjugate()
     return ret;
 }
 
-
 Quaternion operator*(const Quaternion& l, const Quaternion& r)
 {
     const float w = (l.w * r.w) - (l.x * r.x) - (l.y * r.y) - (l.z * r.z);
@@ -151,7 +150,6 @@ Quaternion operator*(const Quaternion& l, const Quaternion& r)
 
     return ret;
 }
-
 
 Quaternion operator*(const Quaternion& q, const Vector3f& v)
 {

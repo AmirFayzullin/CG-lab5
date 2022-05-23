@@ -9,6 +9,7 @@
 #include <math.h>
 #endif
 
+#include "util.h"
 #define ToRadian(x) (float)(((x) * 3.14f / 180.0f))
 #define ToDegree(x) (float)(((x) * 180.0f / 3.14f))
 

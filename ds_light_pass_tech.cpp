@@ -5,7 +5,7 @@
 #include "util.h"
 
 
-DSLightPassTech::DSLightPassTech() : Technique("C:/Users/Amir/Desktop/For UGATU/Computer Graphics/shaders/shaders36/light_pass.glsl")
+DSLightPassTech::DSLightPassTech() : Technique("C:/Users/Amir/Desktop/For UGATU/Computer Graphics/shaders/shaders37/light_pass.glsl")
 {   
 }
 

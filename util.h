@@ -1,10 +1,6 @@
 #ifndef UTIL_H
 #define	UTIL_H
 
-
-#ifndef WIN32
-#include <unistd.h>
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,7 +33,6 @@
 }
 
 #define GLCheckError() (glGetError() == GL_NO_ERROR)
-
 
 #endif	/* UTIL_H */
 
