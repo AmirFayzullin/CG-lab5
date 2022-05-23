@@ -9,8 +9,8 @@
 #include <math.h>
 #endif
 
-#define ToRadian(x) (float)(((x) * M_PI / 180.0f))
-#define ToDegree(x) (float)(((x) * 180.0f / M_PI))
+#define ToRadian(x) (float)(((x) * 3.14f / 180.0f))
+#define ToDegree(x) (float)(((x) * 180.0f / 3.14f))
 
 float RandomFloat();
 

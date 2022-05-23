@@ -13,13 +13,13 @@ public:
 
     void SetWVP(const Matrix4f& WVP);
     void SetWorldMatrix(const Matrix4f& WVP);
-    void SetColorTextureUnit(unsigned int TextureUnit);
+	void SetColorTextureUnit(unsigned int TextureUnit);
 
 private:
 
     GLuint m_WVPLocation;
     GLuint m_WorldMatrixLocation;
-    GLuint m_colorTextureUnitLocation;
+	GLuint m_colorTextureUnitLocation;
 };
 
 

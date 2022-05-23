@@ -17,21 +17,21 @@ bool DSGeomPassTech::Init()
 
     m_WVPLocation = GetUniformLocation("gWVP");
     m_WorldMatrixLocation = GetUniformLocation("gWorld");
-    m_colorTextureUnitLocation = GetUniformLocation("gColorMap");
+	m_colorTextureUnitLocation = GetUniformLocation("gColorMap");
 
-    if (m_WVPLocation == INVALID_UNIFORM_LOCATION ||
-        m_WorldMatrixLocation == INVALID_UNIFORM_LOCATION ||
-        m_colorTextureUnitLocation == INVALID_UNIFORM_LOCATION) {
-        return false;
-    }
+	if (m_WVPLocation == INVALID_UNIFORM_LOCATION ||
+		m_WorldMatrixLocation == INVALID_UNIFORM_LOCATION ||
+		m_colorTextureUnitLocation == INVALID_UNIFORM_LOCATION) {
+			return false;
+	}
 
-    return true;
+	return true;
 }
 
 
 void DSGeomPassTech::SetWVP(const Matrix4f& WVP)
 {
-    glUniformMatrix4fv(m_WVPLocation, 1, GL_TRUE, (const GLfloat*)WVP.m);
+    glUniformMatrix4fv(m_WVPLocation, 1, GL_TRUE, (const GLfloat*)WVP.m);    
 }
 
 
